@@ -90,13 +90,15 @@ class UpliftMLP(pl.LightningModule):
         for i in range(num_hidden_layers):
             layers.append(nn.Linear(input_dim if i == 0 else hidden_dim, hidden_dim))
             layers.append(nn.ReLU())
-        layers.append(nn.Linear(hidden_dim, output_dim))
+        layers.append(nn.Linear(input_dim if num_hidden_layers == 0 else hidden_dim,
+                                output_dim))
         model = nn.Sequential(*layers)
         return model 
 
     def __init__(self, input_dim: int, output_dim: int,
                  hidden_dim: int = 128, num_hidden_layers: int = 1, 
                  l2_weight: float = 0, learning_rate: float = 1e-3, 
+                 optimizer: str = "Adam", lr_scheduler: str = None,
                  **kwargs: Any) -> None:
         super().__init__()
         self.save_hyperparameters()
@@ -166,8 +168,20 @@ class UpliftMLP(pl.LightningModule):
     def test_step(self, batch: Any, batch_idx: int) -> None:
         self.shared_step(batch, batch_idx, "test")
 
+    # def configure_optimizers(self):
+    #     #return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
+    #     return optim.LBFGS(self.parameters(), lr=self.hparams.learning_rate)
+    
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
+        # ref: https://github.com/Lightning-AI/lightning/issues/7576
+        optimizer = getattr(torch.optim, self.hparams.optimizer)(
+            self.parameters(),
+            lr=self.hparams.learning_rate,
+        )
+        if self.hparams.lr_scheduler is None:
+            return optimizer
+        scheduler = self.configure_scheduler(optimizer, self.hparams.lr_scheduler)
+        return [optimizer], [scheduler]    
 
     @staticmethod
     def add_model_specific_args(parent_parser) -> ArgumentParser:
