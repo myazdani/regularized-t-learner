@@ -96,7 +96,8 @@ class UpliftMLP(pl.LightningModule):
 
     def __init__(self, input_dim: int, output_dim: int,
                  hidden_dim: int = 128, num_hidden_layers: int = 1, 
-                 learning_rate: float = 1e-3, **kwargs: Any) -> None:
+                 l2_weight: float = 0, learning_rate: float = 1e-3, 
+                 **kwargs: Any) -> None:
         super().__init__()
         self.save_hyperparameters()
         
@@ -114,12 +115,21 @@ class UpliftMLP(pl.LightningModule):
 
 
         self.criterion = torch.nn.BCEWithLogitsLoss()
+        self.l2_weight = l2_weight
+        self.l2_loss = nn.MSELoss()
         
     def forward(self, x: Tensor) -> Tensor:
         out = x.view(x.size(0), -1)
         out_t = self.model_t(out)
         out_c = self.model_c(out)
         return out_t - out_c
+    
+    def regularization(self):
+        reg_loss = 0
+        for param_t, param_c in zip(self.model_t.parameters(), self.model_c.parameters()):
+            reg_loss += self.l2_loss(param_t, param_c)        
+        return reg_loss
+        
 
     def shared_step(self, batch: Any, batch_idx: int, step: str) -> Tensor:
         x, y, t = batch
@@ -133,6 +143,8 @@ class UpliftMLP(pl.LightningModule):
         loss_t = self.criterion(y_t_pred.squeeze(), y_t)
         loss_c = self.criterion(y_c_pred.squeeze(), y_c)
         loss = loss_t + loss_c
+        if self.l2_weight > 0:
+            loss += self.regularization()
 
         if step == "train":
             self.log("train_loss", loss)
