@@ -97,9 +97,9 @@ class UpliftMLP(pl.LightningModule):
 
     def __init__(self, input_dim: int, output_dim: int,
                  hidden_dim: int = 128, num_hidden_layers: int = 1, 
-                 l2_weight: float = 0, learning_rate: float = 1e-3, 
-                 optimizer: str = "Adam", lr_scheduler: str = None,
-                 **kwargs: Any) -> None:
+                 l2_weight: float = 0, l2_diff: float = 0,
+                 learning_rate: float = 1e-3, optimizer: str = "Adam", 
+                 lr_scheduler: str = None, **kwargs: Any) -> None:
         super().__init__()
         self.save_hyperparameters()
         
@@ -118,6 +118,7 @@ class UpliftMLP(pl.LightningModule):
 
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.l2_weight = l2_weight
+        self.l2_diff = l2_diff
         self.l2_loss = nn.MSELoss()
         
     def forward(self, x: Tensor) -> Tensor:
@@ -130,6 +131,12 @@ class UpliftMLP(pl.LightningModule):
         reg_loss = 0
         for param_t, param_c in zip(self.model_t.parameters(), self.model_c.parameters()):
             reg_loss += self.l2_loss(param_t, param_c)        
+        return reg_loss
+    
+    def l2_regularization(self, params):
+        reg_loss = 0
+        for param in params:
+            reg_loss += self.l2_loss(param, torch.zeros_like(param))
         return reg_loss
         
 
@@ -145,8 +152,11 @@ class UpliftMLP(pl.LightningModule):
         loss_t = self.criterion(y_t_pred.squeeze(), y_t)
         loss_c = self.criterion(y_c_pred.squeeze(), y_c)
         loss = loss_t + loss_c
+        if self.l2_diff > 0:
+            loss += self.l2_diff*self.regularization()
         if self.l2_weight > 0:
-            loss += self.regularization()
+            loss += self.l2_weight*self.l2_regularization(self.model_t.parameters())
+            loss += self.l2_weight*self.l2_regularization(self.model_c.parameters())
 
         if step == "train":
             self.log("train_loss", loss)
@@ -167,10 +177,6 @@ class UpliftMLP(pl.LightningModule):
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         self.shared_step(batch, batch_idx, "test")
-
-    # def configure_optimizers(self):
-    #     #return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
-    #     return optim.LBFGS(self.parameters(), lr=self.hparams.learning_rate)
     
     def configure_optimizers(self):
         # ref: https://github.com/Lightning-AI/lightning/issues/7576
