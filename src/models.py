@@ -43,9 +43,10 @@ class BinaryUplift(pl.LightningModule):
         return out
 
     def shared_step(self, batch: Any, batch_idx: int, step: str) -> Tensor:
-        x, y, _ = batch
-        y_hat = self(x)
-        loss = self.criterion(y_hat.squeeze(), y)
+        x, y, t = batch
+        z = t*y + (1-t)*(1-y)
+        z_hat = self(x)
+        loss = self.criterion(z_hat.squeeze(), z)
 
         if step == "train":
             self.log("train_loss", loss)
