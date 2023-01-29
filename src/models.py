@@ -150,8 +150,8 @@ class UpliftMLP(pl.LightningModule):
         y_t_pred = self.model_t(x_t)
         y_c_pred = self.model_c(x_c)
         
-        loss_t = self.criterion(y_t_pred.squeeze(), y_t)
-        loss_c = self.criterion(y_c_pred.squeeze(), y_c)
+        loss_t = self.criterion(y_t_pred, y_t.view(-1,1))
+        loss_c = self.criterion(y_c_pred, y_c.view(-1,1))
         loss = loss_t + loss_c
         if self.l2_diff > 0:
             loss += self.l2_diff*self.regularization()
