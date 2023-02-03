@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 import data
-import models
+from models.uplift_mlp import UpliftMLP
 
 from torch import optim, nn, utils, Tensor
 import torch.nn.functional as F
@@ -61,7 +61,7 @@ if __name__ == "__main__":  # pragma: no cover
         break
     _, input_dim = batch[0].size()
     
-    mlp = models.UpliftMLP(input_dim=input_dim, output_dim=1, hidden_dim=args.nhid, num_hidden_layers=args.layers,
+    mlp = UpliftMLP(input_dim=input_dim, output_dim=1, hidden_dim=args.nhid, num_hidden_layers=args.layers,
                            l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, optimizer = args.optim
                         )
     
