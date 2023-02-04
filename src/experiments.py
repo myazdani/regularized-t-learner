@@ -15,7 +15,9 @@ def cli_main():
     parser.add_argument('--lr', type=float, default=4e-3,
                     help='initial learning rate (default: 4e-3)')
     parser.add_argument('--epochs', type=int, default=1,
-                        help='num epochs (default: 1111)')  
+                        help='num epochs (default: 1)')  
+    parser.add_argument('--max_steps', type=int, default=-1,
+                        help='maximum num steps (disabled by default: -1)')                          
     parser.add_argument('--l2', type=float, default=1e-3,
                     help='l2 regularization for each learner')    
     parser.add_argument('--l2_diff', type=float, default=1e-3,
