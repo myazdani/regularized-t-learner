@@ -2,15 +2,10 @@ from argparse import ArgumentParser
 import data
 from models.uplift_mlp import UpliftMLP
 
-from torch import optim, nn, utils, Tensor
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
-import torch
-
-import pandas as pd 
-import numpy as np
-import collections
+from pytorch_lightning.loggers import TensorBoardLogger
 
 
 def cli_main():
@@ -19,6 +14,8 @@ def cli_main():
                         help='batch size (default: 32)')    
     parser.add_argument('--lr', type=float, default=4e-3,
                     help='initial learning rate (default: 4e-3)')
+    parser.add_argument('--epochs', type=int, default=1,
+                        help='num epochs (default: 1111)')  
     parser.add_argument('--l2', type=float, default=1e-3,
                     help='l2 regularization for each learner')    
     parser.add_argument('--l2_diff', type=float, default=1e-3,
@@ -31,6 +28,8 @@ def cli_main():
                         help='number of hidden units per layer (default: 256)')    
     parser.add_argument('--layers', type=int, default=1,
                         help='# of levels (default: 1)')
+    parser.add_argument('--name', type=str, default="my_model",
+                        help='name used for logging (default: my_model)')                        
     args = parser.parse_args()    
     return args
 
@@ -50,10 +49,10 @@ def fetch_lenta_tr_val(random_state=None):
 
 if __name__ == "__main__":  # pragma: no cover
     args = cli_main()
+    logger = TensorBoardLogger("tb_logs", name=args.name)
+    logger.log_hyperparams(vars(args))
     
     train_set, val_set = fetch_lenta_tr_val(args.seed)    
-    
-    
     tr_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)    
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=True)    
     
@@ -65,7 +64,7 @@ if __name__ == "__main__":  # pragma: no cover
                            l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, optimizer = args.optim
                         )
     
-    trainer = pl.Trainer(overfit_batches=True)
-    trainer.fit(model=mlp, train_dataloaders=tr_loader)
+    trainer = pl.Trainer(logger=logger, max_epochs=args.epochs)
+    trainer.fit(model=mlp, train_dataloaders=tr_loader, val_dataloaders=val_loader)
     
     
