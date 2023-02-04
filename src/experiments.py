@@ -32,6 +32,8 @@ def cli_main():
                         help='# of levels (default: 1)')
     parser.add_argument('--name', type=str, default="my_model",
                         help='name used for logging (default: my_model)')                        
+    parser.add_argument('--logger_name', type=str, default="tb_logs",
+                        help='name used for director for logging (default: tb_logs)')                                                
     args = parser.parse_args()    
     return args
 
@@ -51,7 +53,7 @@ def fetch_lenta_tr_val(random_state=None):
 
 if __name__ == "__main__":  # pragma: no cover
     args = cli_main()
-    logger = TensorBoardLogger("tb_logs", name=args.name)
+    logger = TensorBoardLogger(args.logger_name, name=args.name)
     logger.log_hyperparams(vars(args))
     
     train_set, val_set = fetch_lenta_tr_val(args.seed)    
@@ -66,7 +68,7 @@ if __name__ == "__main__":  # pragma: no cover
                            l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, optimizer = args.optim
                         )
     
-    trainer = pl.Trainer(logger=logger, max_epochs=args.epochs)
+    trainer = pl.Trainer(logger=logger, max_epochs=args.epochs, max_steps=args.max_steps)
     trainer.fit(model=mlp, train_dataloaders=tr_loader, val_dataloaders=val_loader)
     
     
