@@ -30,6 +30,8 @@ def cli_main():
                         help='number of hidden units per layer (default: 256)')    
     parser.add_argument('--layers', type=int, default=1,
                         help='# of levels (default: 1)')
+    parser.add_argument('--accelerator', type = str, default="cpu",
+                        help="accelator to use (default cpu, use 'gpu'")
     parser.add_argument('--name', type=str, default="my_model",
                         help='name used for logging (default: my_model)')                        
     parser.add_argument('--logger_name', type=str, default="tb_logs",
@@ -68,7 +70,7 @@ if __name__ == "__main__":  # pragma: no cover
                            l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, optimizer = args.optim
                         )
     
-    trainer = pl.Trainer(logger=logger, max_epochs=args.epochs, max_steps=args.max_steps)
+    trainer = pl.Trainer(logger=logger, max_epochs=args.epochs, max_steps=args.max_steps, accelerator=args.accelerator)
     trainer.fit(model=mlp, train_dataloaders=tr_loader, val_dataloaders=val_loader)
     
     
