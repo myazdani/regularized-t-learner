@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import TQDMProgressBar
 
 
 def cli_main():
@@ -33,7 +34,9 @@ def cli_main():
     parser.add_argument('--accelerator', type = str, default="cpu",
                         help="accelator to use (default cpu, use 'gpu'")
     parser.add_argument('--name', type=str, default="my_model",
-                        help='name used for logging (default: my_model)')                        
+                        help='name used for logging (default: my_model)')
+    parser.add_argument('--progress_bar_refresh', type=int, default=10,
+                        help='refresh rate for progress bar (default: 10)')                            
     parser.add_argument('--logger_name', type=str, default="tb_logs",
                         help='name used for director for logging (default: tb_logs)')                                                
     args = parser.parse_args()    
@@ -70,7 +73,10 @@ if __name__ == "__main__":  # pragma: no cover
                            l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, optimizer = args.optim
                         )
     
-    trainer = pl.Trainer(logger=logger, max_epochs=args.epochs, max_steps=args.max_steps, accelerator=args.accelerator)
+    trainer = pl.Trainer(logger=logger, max_epochs=args.epochs, max_steps=args.max_steps, 
+                            accelerator=args.accelerator, 
+                            callbacks=[TQDMProgressBar(refresh_rate=args.progress_bar_refresh)]
+                        )
     trainer.fit(model=mlp, train_dataloaders=tr_loader, val_dataloaders=val_loader)
     
     
