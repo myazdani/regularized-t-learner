@@ -63,7 +63,7 @@ if __name__ == "__main__":  # pragma: no cover
     
     train_set, val_set = fetch_lenta_tr_val(args.seed)    
     tr_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)    
-    val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=True)    
+    val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False)    
     
     for batch in val_loader:
         break
