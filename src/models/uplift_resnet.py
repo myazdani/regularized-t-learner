@@ -1,5 +1,5 @@
 from torch import nn
-from src.models.uplift_mlp import UpliftMLP
+from models.uplift_mlp import UpliftMLP
 
     
 class UpliftResNet(UpliftMLP):
@@ -20,7 +20,7 @@ class UpliftResNet(UpliftMLP):
                 layers.append(nn.Linear(input_dim, hidden_dim))
                 layers.append(nn.ReLU())
             else:
-                layers.append(ResNet(nn.Linear(hidden_dim, hidden_dim)))                
+                layers.append(UpliftResNet.ResNet(nn.Linear(hidden_dim, hidden_dim)))                
         layers.append(nn.Linear(input_dim if num_hidden_layers == 0 else hidden_dim,
                                 output_dim))
         model = nn.Sequential(*layers)
