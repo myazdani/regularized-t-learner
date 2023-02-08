@@ -26,12 +26,12 @@ class UpliftMLP(pl.LightningModule):
 
     def __init__(self, input_dim: int, output_dim: int,
                  hidden_dim: int = 128, num_hidden_layers: int = 1, 
-                 l2_weight: float = 0, l2_diff: float = 0,
+                 l2_weight: float = 0, l2_diff: float = 0, grad_glip: float = 0.9,
                  learning_rate: float = 1e-3, optimizer: str = "Adam", 
                  lr_scheduler: str = None, **kwargs: Any) -> None:
         super().__init__()
         self.save_hyperparameters()
-        
+        self.automatic_optimization = False
         self.model_t = UpliftMLP.fetch_model(self.hparams.input_dim, 
                                               self.hparams.output_dim,
                                               self.hparams.hidden_dim,
@@ -89,6 +89,11 @@ class UpliftMLP(pl.LightningModule):
 
         if step == "train":
             self.log("train_loss", loss)
+            opt = self.optimizers()
+            opt.zero_grad()
+            self.manual_backward(loss)
+            self.clip_gradients(opt, gradient_clip_val=0.5, gradient_clip_algorithm="norm")
+            opt.step()
         elif step == "val":
             self.log("val_loss", loss)
         elif step == "test":

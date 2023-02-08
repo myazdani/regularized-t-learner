@@ -22,7 +22,9 @@ def cli_main():
     parser.add_argument('--l2', type=float, default=1e-3,
                     help='l2 regularization for each learner')    
     parser.add_argument('--l2_diff', type=float, default=1e-3,
-                    help='l2 regularization for both learners')        
+                    help='l2 regularization for both learners')   
+    parser.add_argument('--grad_clip', type=float, default=-1,
+                    help='gradient clipping (default -1, ignored')   
     parser.add_argument('--seed', type=int, default=1111,
                         help='random seed (default: 1111)')  
     parser.add_argument('--optim', type=str, default='Adam',
@@ -70,7 +72,8 @@ if __name__ == "__main__":  # pragma: no cover
     _, input_dim = batch[0].size()
     
     mlp = UpliftMLP(input_dim=input_dim, output_dim=1, hidden_dim=args.nhid, num_hidden_layers=args.layers,
-                           l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, optimizer = args.optim
+                           l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, 
+                           optimizer=args.optim, gard_clip=args.grad_clip
                         )
     
     trainer = pl.Trainer(logger=logger, max_epochs=args.epochs, max_steps=args.max_steps, 
