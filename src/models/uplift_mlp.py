@@ -111,7 +111,11 @@ class UpliftMLP(pl.LightningModule):
 
     def test_step(self, batch: Any, batch_idx: int) -> None:
         self.shared_step(batch, batch_idx, "test")
-    
+
+    def configure_scheduler(self, optimizer, lr_scheduler):
+        scheduler = getattr(torch.optim.lr_scheduler, lr_scheduler)(optimizer, 100)
+        return scheduler
+
     def configure_optimizers(self):
         # ref: https://github.com/Lightning-AI/lightning/issues/7576
         optimizer = getattr(torch.optim, self.hparams.optimizer)(
@@ -121,7 +125,7 @@ class UpliftMLP(pl.LightningModule):
         if self.hparams.lr_scheduler is None:
             return optimizer
         scheduler = self.configure_scheduler(optimizer, self.hparams.lr_scheduler)
-        return [optimizer], [scheduler]    
+        return [optimizer], [scheduler]         
 
     @staticmethod
     def add_model_specific_args(parent_parser) -> ArgumentParser:
