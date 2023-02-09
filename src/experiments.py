@@ -36,6 +36,8 @@ def cli_main():
                         help='number of hidden units per layer (default: 256)')    
     parser.add_argument('--layers', type=int, default=1,
                         help='# of levels (default: 1)')
+    parser.add_argument('--layer_norm', type=bool, default=False,
+                        help='if we should use layer normalization (default: False)')
     parser.add_argument('--accelerator', type = str, default="cpu",
                         help="accelator to use (default cpu, use 'gpu'")
     parser.add_argument('--name', type=str, default="my_model",
@@ -76,7 +78,8 @@ if __name__ == "__main__":  # pragma: no cover
     
     mlp = UpliftResNet(input_dim=input_dim, output_dim=1, hidden_dim=args.nhid, num_hidden_layers=args.layers,
                            l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, 
-                           optimizer=args.optim, gard_clip=args.grad_clip, lr_scheduler=args.lr_scheduler
+                           optimizer=args.optim, gard_clip=args.grad_clip, lr_scheduler=args.lr_scheduler,
+                           use_layer_norm=args.layer_norm
                         )
     
     trainer = pl.Trainer(logger=logger, max_epochs=args.epochs, max_steps=args.max_steps, 

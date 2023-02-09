@@ -14,11 +14,13 @@ class UpliftMLP(pl.LightningModule):
         learning_rate (float, optional): optimizer learning rate (default: ``1e-3``).
     """
     @staticmethod
-    def fetch_model(input_dim, output_dim, hidden_dim, num_hidden_layers = 1):
+    def fetch_model(input_dim, output_dim, hidden_dim, num_hidden_layers=1, use_layer_norm=False):
         layers = []
         for i in range(num_hidden_layers):
             layers.append(nn.Linear(input_dim if i == 0 else hidden_dim, hidden_dim))
             layers.append(nn.ReLU())
+            if use_layer_norm:
+                layers.append(nn.LayerNorm(hidden_dim))            
         layers.append(nn.Linear(input_dim if num_hidden_layers == 0 else hidden_dim,
                                 output_dim))
         model = nn.Sequential(*layers)
@@ -28,20 +30,23 @@ class UpliftMLP(pl.LightningModule):
                  hidden_dim: int = 128, num_hidden_layers: int = 1, 
                  l2_weight: float = 0, l2_diff: float = 0, grad_glip: float = 0.9,
                  learning_rate: float = 1e-3, optimizer: str = "Adam", 
-                 lr_scheduler: str = None, **kwargs: Any) -> None:
+                 use_layer_norm: bool = False, lr_scheduler: str = None, 
+                 **kwargs: Any) -> None:
         super().__init__()
         self.save_hyperparameters()
         self.automatic_optimization = False
         self.model_t = UpliftMLP.fetch_model(self.hparams.input_dim, 
                                               self.hparams.output_dim,
                                               self.hparams.hidden_dim,
-                                              self.hparams.num_hidden_layers
+                                              self.hparams.num_hidden_layers,
+                                              self.hparams.use_layer_norm
                                              )
         
         self.model_c = UpliftMLP.fetch_model(self.hparams.input_dim, 
                                       self.hparams.output_dim,
                                       self.hparams.hidden_dim,
-                                      self.hparams.num_hidden_layers
+                                      self.hparams.num_hidden_layers,
+                                      self.hparams.use_layer_norm
                                      )
 
 
