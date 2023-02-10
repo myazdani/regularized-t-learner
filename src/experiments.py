@@ -45,7 +45,9 @@ def cli_main():
     parser.add_argument('--progress_bar_refresh', type=int, default=10,
                         help='refresh rate for progress bar (default: 10)')                            
     parser.add_argument('--logger_name', type=str, default="tb_logs",
-                        help='name used for director for logging (default: tb_logs)')                                                
+                        help='name used for director for logging (default: tb_logs)')     
+    parser.add_argument("--model_type", type=str, default="mlp",
+                        help='type of model to pick, either "mlp" or "resnet" (default mlp)')                                           
     args = parser.parse_args()    
     return args
 
@@ -75,8 +77,15 @@ if __name__ == "__main__":  # pragma: no cover
     for batch in val_loader:
         break
     _, input_dim = batch[0].size()
+
+    if args.model_type == 'mlp':
+        net_arch = UpliftMLP
+    elif args.model_type == 'resnet':
+        net_arch = UpliftResNet
+    else:
+        raise Exception('Model type not supported')
     
-    mlp = UpliftResNet(input_dim=input_dim, output_dim=1, hidden_dim=args.nhid, num_hidden_layers=args.layers,
+    mlp = net_arch(input_dim=input_dim, output_dim=1, hidden_dim=args.nhid, num_hidden_layers=args.layers,
                            l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, 
                            optimizer=args.optim, gard_clip=args.grad_clip, lr_scheduler=args.lr_scheduler,
                            use_layer_norm=args.layer_norm
