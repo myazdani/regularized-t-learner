@@ -32,8 +32,8 @@ class UpliftMLP(pl.LightningModule):
                  hidden_dim: int = 128, num_hidden_layers: int = 1, 
                  l2_weight: float = 0, l2_diff: float = 0, grad_glip: float = 0.9,
                  learning_rate: float = 1e-3, optimizer: str = "Adam", 
-                 use_layer_norm: bool = False, lr_scheduler: str = None, 
-                 **kwargs: Any) -> None:
+                 use_layer_norm: bool = False, dropout_prob: float = 0.0,
+                 lr_scheduler: str = None, **kwargs: Any) -> None:
         super().__init__()
         self.save_hyperparameters()
         self.automatic_optimization = False
@@ -41,14 +41,16 @@ class UpliftMLP(pl.LightningModule):
                                               self.hparams.output_dim,
                                               self.hparams.hidden_dim,
                                               self.hparams.num_hidden_layers,
-                                              self.hparams.use_layer_norm
+                                              self.hparams.use_layer_norm,
+                                              self.hparams.dropout_prob
                                              )
         
         self.model_c = UpliftMLP.fetch_model(self.hparams.input_dim, 
                                       self.hparams.output_dim,
                                       self.hparams.hidden_dim,
                                       self.hparams.num_hidden_layers,
-                                      self.hparams.use_layer_norm
+                                      self.hparams.use_layer_norm,
+                                      self.hparams.dropout_prob
                                      )
 
 

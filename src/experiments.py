@@ -21,9 +21,11 @@ def cli_main():
     parser.add_argument('--max_steps', type=int, default=-1,
                         help='maximum num steps (disabled by default: -1)')                          
     parser.add_argument('--l2', type=float, default=1e-3,
-                    help='l2 regularization for each learner')    
+                    help='l2 regularization for each learner (default 1e-3)')    
     parser.add_argument('--l2_diff', type=float, default=1e-3,
-                    help='l2 regularization for both learners')   
+                    help='l2 regularization for both learners (default 1e-3)')   
+    parser.add_argument('--drop_out', type=float, default=0,
+                    help='drop out prob (default 0; no drop out)')                        
     parser.add_argument('--grad_clip', type=float, default=-1,
                     help='gradient clipping (default -1, ignored')  
     parser.add_argument('--lr_scheduler', type=str,
@@ -88,7 +90,7 @@ if __name__ == "__main__":  # pragma: no cover
     mlp = net_arch(input_dim=input_dim, output_dim=1, hidden_dim=args.nhid, num_hidden_layers=args.layers,
                            l2_weight=args.l2, l2_diff=args.l2_diff, learning_rate=args.lr, 
                            optimizer=args.optim, gard_clip=args.grad_clip, lr_scheduler=args.lr_scheduler,
-                           use_layer_norm=args.layer_norm
+                           use_layer_norm=args.layer_norm, dropout_prob=args.drop_out
                         )
     
     trainer = pl.Trainer(logger=logger, max_epochs=args.epochs, max_steps=args.max_steps, 
