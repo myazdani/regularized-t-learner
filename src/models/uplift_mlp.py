@@ -14,17 +14,19 @@ class UpliftMLP(pl.LightningModule):
         learning_rate (float, optional): optimizer learning rate (default: ``1e-3``).
     """
     @staticmethod
-    def fetch_model(input_dim, output_dim, hidden_dim, num_hidden_layers=1, use_layer_norm=False):
+    def fetch_model(input_dim, output_dim, hidden_dim, num_hidden_layers=1, use_layer_norm=False, dropout_prob=0.0):
         layers = []
         for i in range(num_hidden_layers):
             layers.append(nn.Linear(input_dim if i == 0 else hidden_dim, hidden_dim))
             layers.append(nn.ReLU())
             if use_layer_norm:
-                layers.append(nn.LayerNorm(hidden_dim))            
+                layers.append(nn.LayerNorm(hidden_dim))
+            if dropout_prob > 0:
+                layers.append(nn.Dropout(p=dropout_prob))          
         layers.append(nn.Linear(input_dim if num_hidden_layers == 0 else hidden_dim,
                                 output_dim))
         model = nn.Sequential(*layers)
-        return model 
+        return model
 
     def __init__(self, input_dim: int, output_dim: int,
                  hidden_dim: int = 128, num_hidden_layers: int = 1, 
