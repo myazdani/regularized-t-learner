@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 import data
 from models.uplift_mlp import UpliftMLP
 from models.uplift_resnet import UpliftResNet
+from models.binary_uplift import BinaryUplift
 
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -49,7 +50,7 @@ def cli_main():
     parser.add_argument('--logger_name', type=str, default="tb_logs",
                         help='name used for director for logging (default: tb_logs)')     
     parser.add_argument("--model_type", type=str, default="mlp",
-                        help='type of model to pick, either "mlp" or "resnet" (default mlp)')                                           
+                        help='type of model to pick, either "mlp" or "resnet" pr "binary" (default mlp)')                                           
     args = parser.parse_args()    
     return args
 
@@ -84,6 +85,8 @@ if __name__ == "__main__":  # pragma: no cover
         net_arch = UpliftMLP
     elif args.model_type == 'resnet':
         net_arch = UpliftResNet
+    elif args.model_type == 'binary':
+        net_arch = BinaryUplift
     else:
         raise Exception('Model type not supported')
     
