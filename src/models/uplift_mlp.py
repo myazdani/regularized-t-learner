@@ -5,36 +5,22 @@ import torch
 
 from typing import Any
 from argparse import ArgumentParser
+from models.binary_uplift import BinaryUplift
 
     
-class UpliftMLP(pl.LightningModule):
-    """PyTorch Lightning implementation of a MLP
-    Args:
-        hidden_dim (int, optional): dimension of hidden layer (default: ``128``).
-        learning_rate (float, optional): optimizer learning rate (default: ``1e-3``).
-    """
-    @staticmethod
-    def fetch_model(input_dim, output_dim, hidden_dim, num_hidden_layers=1, use_layer_norm=False, dropout_prob=0.0):
-        layers = []
-        for i in range(num_hidden_layers):
-            layers.append(nn.Linear(input_dim if i == 0 else hidden_dim, hidden_dim))
-            layers.append(nn.ReLU())
-            if use_layer_norm:
-                layers.append(nn.LayerNorm(hidden_dim))
-            if dropout_prob > 0:
-                layers.append(nn.Dropout(p=dropout_prob))          
-        layers.append(nn.Linear(input_dim if num_hidden_layers == 0 else hidden_dim,
-                                output_dim))
-        model = nn.Sequential(*layers)
-        return model
-
+class UpliftMLP(BinaryUplift):
     def __init__(self, input_dim: int, output_dim: int,
                  hidden_dim: int = 128, num_hidden_layers: int = 1, 
                  l2_weight: float = 0, l2_diff: float = 0, grad_glip: float = 0.9,
                  learning_rate: float = 1e-3, optimizer: str = "Adam", 
                  use_layer_norm: bool = False, dropout_prob: float = 0.0,
                  lr_scheduler: str = None, **kwargs: Any) -> None:
-        super().__init__()
+        super().__init__(input_dim=input_dim, output_dim=output_dim,
+                    hidden_dim=hidden_dim, num_hidden_layers=num_hidden_layers,
+                    grad_glip=grad_glip, optimizer=optimizer,
+                    use_layer_norm=use_layer_norm, dropout_prob=dropout_prob,
+                    learning_rate=learning_rate, lr_scheduler=lr_scheduler,
+                    **kwargs)
         self.save_hyperparameters()
         self.automatic_optimization = False
         self.model_t = UpliftMLP.fetch_model(self.hparams.input_dim, 
@@ -112,14 +98,6 @@ class UpliftMLP(pl.LightningModule):
 
         return loss
 
-    def training_step(self, batch: Any, batch_idx: int) -> Tensor:
-        return self.shared_step(batch, batch_idx, "train")
-
-    def validation_step(self, batch: Any, batch_idx: int) -> None:
-        self.shared_step(batch, batch_idx, "val")
-
-    def test_step(self, batch: Any, batch_idx: int) -> None:
-        self.shared_step(batch, batch_idx, "test")
 
     def configure_scheduler(self, optimizer, lr_scheduler):
         scheduler = getattr(torch.optim.lr_scheduler, lr_scheduler)(optimizer, 100)

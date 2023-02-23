@@ -13,7 +13,12 @@ class UpliftResNet(UpliftMLP):
             return nn.ReLU(self.module(inputs)) + inputs
 
     @staticmethod
-    def fetch_model(input_dim: int, output_dim: int, hidden_dim: int, num_hidden_layers: int = 1, use_layer_norm: bool = False, dropout_prob: float = 0.0) -> nn.Module:
+    def fetch_model(input_dim: int, output_dim: int, hidden_dim: int, num_hidden_layers: int = 1, 
+                    use_layer_norm: bool = False, dropout_prob: float = 0.0) -> nn.Module:
+        """Rerturns fully-connected ResNet
+        num_hidden_layers=1 -> 1 hidden layer (default)
+        num_hidden_layers=0 -> linear model
+        """                
         layers = []
         for i in range(num_hidden_layers):
             if i == 0:
