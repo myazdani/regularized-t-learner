@@ -9,6 +9,8 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from math import inf 
 
 
 def cli_main():
@@ -30,7 +32,10 @@ def cli_main():
     parser.add_argument('--grad_clip', type=float, default=-1,
                     help='gradient clipping (default -1, ignored')  
     parser.add_argument('--lr_scheduler', type=str,
-                    help='learning rate scheduler; default none')                     
+                    help='learning rate scheduler; default none')   
+    parser.add_argument('--early_stopping_patience', type=int, default=inf,
+                    help='patience for early stopping \
+                    (defualt is inf which means early stopping ignored)')                  
     parser.add_argument('--seed', type=int, default=1111,
                         help='random seed (default: 1111)')  
     parser.add_argument('--optim', type=str, default='Adam',
@@ -96,9 +101,11 @@ if __name__ == "__main__":  # pragma: no cover
                            use_layer_norm=args.layer_norm, dropout_prob=args.drop_out
                         )
     
+    callbacks = [TQDMProgressBar(refresh_rate=args.progress_bar_refresh)]
+    if args.early_stopping_patience < inf:
+        callbacks.append(EarlyStopping(monitor="val_loss", mode="min", patience=args.early_stopping_patience))
     trainer = pl.Trainer(logger=logger, max_epochs=args.epochs, max_steps=args.max_steps, 
-                            accelerator=args.accelerator, 
-                            callbacks=[TQDMProgressBar(refresh_rate=args.progress_bar_refresh)]
+                            accelerator=args.accelerator, callbacks=callbacks
                         )
     trainer.fit(model=mlp, train_dataloaders=tr_loader, val_dataloaders=val_loader)
     
